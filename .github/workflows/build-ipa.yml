@@ -12,16 +12,9 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 显示文件结构
-        run: |
-          pwd
-          ls -la
-
       - name: 定位工程目录（兼容嵌套/平铺两种上传结构）
         run: |
-          if [ -d MiSound-iOS ]; then
-            cd MiSound-iOS
-          fi
+          if [ -d MiSound-iOS ]; then cd MiSound-iOS; fi
           echo "project_dir=$(pwd)" >> $GITHUB_ENV
 
       - name: 编译（关闭签名）
@@ -34,14 +27,15 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            -derivedDataPath build \
             build
         working-directory: ${{ env.project_dir }}
 
       - name: 打 IPA 包
         run: |
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "MiSound.app" -path "*Release-iphoneos*" -print -quit)
+          echo "找到应用: $APP"
           mkdir -p Payload
-          cp -R build/Build/Products/Release-iphoneos/MiSound.app Payload/
+          cp -R "$APP" Payload/
           ditto -c -k --keepParent Payload MiSound-TrollStore.ipa
           ls -la MiSound-TrollStore.ipa
         working-directory: ${{ env.project_dir }}
